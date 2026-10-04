@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FitCoach – Your personalised fitness plan</title>
+<style>
+  :root{
+    --bg:#000;
+    --card:#0d0d0f;
+    --card-border:#26262b;
+    --text:#f4f4f5;
+    --muted:#9a9aa3;
+    --accent:#c6f432;
+    --accent-ink:#0a0a0a;
+    --danger:#ff6b6b;
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body{min-height:100vh;display:flex;justify-content:center;padding:32px 16px 64px}
+  .wrap{width:100%;max-width:640px}
+  header{text-align:center;margin-bottom:28px}
+  .logo{display:inline-flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px;font-size:18px}
+  .logo span.dot{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px var(--accent)}
+  h1{font-size:clamp(28px,6vw,38px);line-height:1.15;margin:18px 0 10px}
+  h1 em{font-style:normal;color:var(--accent)}
+  .sub{color:var(--muted);font-size:16px;line-height:1.5;margin:0 auto;max-width:480px}
+
+  .card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:28px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:520px){.row{grid-template-columns:1fr}.card{padding:20px}}
+  .field{margin-bottom:18px}
+  label{display:block;font-size:13px;font-weight:600;color:#d4d4d8;margin-bottom:7px;letter-spacing:.2px}
+  input,select{
+    width:100%;background:#000;color:var(--text);border:1px solid var(--card-border);border-radius:12px;
+    padding:13px 14px;font-size:16px;font-family:inherit;outline:none;transition:border-color .15s, box-shadow .15s;
+    appearance:none;-webkit-appearance:none}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239a9aa3' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+  input::placeholder{color:#55555c}
+  input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(198,244,50,.15)}
+  .unit{position:relative}
+  .unit input{padding-right:46px}
+  .unit span{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
+  .err{color:var(--danger);font-size:13px;margin-top:6px;min-height:0;display:none}
+  .field.invalid input,.field.invalid select{border-color:var(--danger)}
+  .field.invalid .err{display:block}
+
+  button.primary{
+    width:100%;background:var(--accent);color:var(--accent-ink);border:0;border-radius:12px;
+    padding:15px 18px;font-size:17px;font-weight:700;cursor:pointer;margin-top:6px;
+    transition:transform .08s, filter .15s}
+  button.primary:hover{filter:brightness(1.08)}
+  button.primary:active{transform:scale(.99)}
+  button.primary:focus-visible{outline:3px solid rgba(198,244,50,.45);outline-offset:2px}
+  button.ghost{background:transparent;color:var(--text);border:1px solid var(--card-border);border-radius:12px;
+    padding:12px 18px;font-size:15px;font-weight:600;cursor:pointer}
+  button.ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .fine{color:var(--muted);font-size:12.5px;text-align:center;margin:16px 0 0;line-height:1.5}
+
+  /* status views */
+  .center{text-align:center;padding:48px 24px}
+  .spinner{width:56px;height:56px;border-radius:50%;margin:0 auto 24px;
+    border:4px solid #1d1d22;border-top-color:var(--accent);animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .center h2{margin:0 0 8px;font-size:22px}
+  .center p{color:var(--muted);margin:6px auto;max-width:420px;line-height:1.5}
+  .check{width:64px;height:64px;border-radius:50%;background:rgba(198,244,50,.12);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:var(--accent);font-size:32px}
+
+  /* result */
+  .result-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .result-head h2{margin:0;font-size:22px}
+  .badge{background:rgba(198,244,50,.12);color:var(--accent);font-size:12.5px;font-weight:600;
+    padding:6px 12px;border-radius:999px}
+  iframe#plan{width:100%;border:1px solid var(--card-border);border-radius:var(--radius);background:#0d0d0f;min-height:300px;display:block}
+  .actions{display:flex;justify-content:center;margin-top:20px}
+
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo"><span class="dot"></span> FitCoach</div>
+    <h1>Your personalised <em>fitness &amp; nutrition</em> plan</h1>
+    <p class="sub">Tell us a little about your goal. Our AI coach builds a plan around your weight, timeline and food preferences.</p>
+  </header>
+
+  <!-- FORM VIEW -->
+  <main id="view-form" class="card">
+    <form id="plan-form" novalidate>
+      <div class="field" id="f-fullName">
+        <label for="fullName">Full name</label>
+        <input id="fullName" name="fullName" type="text" autocomplete="name" placeholder="e.g. Robben Chopra">
+        <div class="err">Please enter your name.</div>
+      </div>
+
+      <div class="field" id="f-email">
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com">
+        <div class="err">Please enter a valid email address.</div>
+      </div>
+
+      <div class="field" id="f-goal">
+        <label for="goal">Goal</label>
+        <select id="goal" name="goal">
+          <option value="" disabled selected>Choose your goal</option>
+          <option value="weight loss">Weight loss</option>
+          <option value="muscle building">Muscle building</option>
+        </select>
+        <div class="err">Please choose a goal.</div>
+      </div>
+
+      <div class="row">
+        <div class="field" id="f-currentWeight">
+          <label for="currentWeight">Current weight</label>
+          <div class="unit">
+            <input id="currentWeight" name="currentWeight" type="number" inputmode="decimal" step="0.1" min="20" max="400" placeholder="80">
+            <span>kg</span>
+          </div>
+          <div class="err">Enter a weight between 20 and 400 kg.</div>
+        </div>
+        <div class="field" id="f-targetWeight">
+          <label for="targetWeight">Target weight</label>
+          <div class="unit">
+            <input id="targetWeight" name="targetWeight" type="number" inputmode="decimal" step="0.1" min="20" max="400" placeholder="74">
+            <span>kg</span>
+          </div>
+          <div class="err" id="targetErr">Enter a weight between 20 and 400 kg.</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field" id="f-timeline">
+          <label for="timeline">Timeline</label>
+          <select id="timeline" name="timeline">
+            <option value="" disabled selected>Choose a timeline</option>
+            <option value="4 weeks">4 weeks</option>
+            <option value="3 months">3 months</option>
+            <option value="6 months">6 months</option>
+            <option value="1 year">1 year</option>
+          </select>
+          <div class="err">Please choose a timeline.</div>
+        </div>
+        <div class="field" id="f-dietPreferences">
+          <label for="dietPreferences">Diet preference</label>
+          <select id="dietPreferences" name="dietPreferences">
+            <option value="" disabled selected>Choose a diet</option>
+            <option value="vegetarian">Vegetarian</option>
+            <option value="non-vegetarian">Non-vegetarian</option>
+            <option value="vegan">Vegan</option>
+            <option value="eggitarian">Eggitarian</option>
+          </select>
+          <div class="err">Please choose a diet preference.</div>
+        </div>
+      </div>
+
+      <button class="primary" type="submit">Generate my fitness plan</button>
+      <p class="fine">General wellness guidance, not medical advice. Check with a doctor before starting a new programme.</p>
+    </form>
+  </main>
+
+  <!-- LOADING VIEW -->
+  <section id="view-loading" class="card center hidden" role="status" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <h2>Your fitness plan is being generated.</h2>
+    <p>This usually takes under a minute. Please keep this page open.</p>
+  </section>
+
+  <!-- RESULT VIEW (HTML returned by the webhook) -->
+  <section id="view-result" class="hidden">
+    <div class="result-head">
+      <h2>Your plan is ready</h2>
+      <span class="badge" id="mail-badge">A copy is on its way to your email</span>
+    </div>
+    <iframe id="plan" title="Your personalised fitness plan"
+            sandbox="allow-same-origin" referrerpolicy="no-referrer"></iframe>
+    <div class="actions"><button class="ghost" id="again-1">Create another plan</button></div>
+  </section>
+
+  <!-- EMAIL-ONLY VIEW (fallback when the webhook sends no HTML back) -->
+  <section id="view-emailed" class="card center hidden">
+    <div class="check" aria-hidden="true">&#10003;</div>
+    <h2>Check your inbox</h2>
+    <p>Your personalised fitness and nutrition plan is being prepared and will be emailed to <strong id="sent-to"></strong> shortly.</p>
+    <p>If you don't see it in a few minutes, check your spam folder.</p>
+    <div class="actions"><button class="ghost" id="again-2">Create another plan</button></div>
+  </section>
+
+  <!-- ERROR VIEW -->
+  <section id="view-error" class="card center hidden" role="alert">
+    <h2>Something went wrong</h2>
+    <p id="error-msg">We couldn't generate your plan. Please try again.</p>
+    <div class="actions"><button class="ghost" id="retry">Back to the form</button></div>
+  </section>
+
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+   CONFIG – the only place you need to edit.
+   NOTE: this is a static page, so this URL is visible to anyone who
+   opens "View Source". It is not a password, but treat it as public.
+-------------------------------------------------------------------*/
+const CONFIG = {
+  WEBHOOK_URL: "https://rchopra.app.n8n.cloud/webhook/ddc9ad5e-d6ec-49e1-8762-b2dc3fc4eb1f",
+  TIMEOUT_MS: 150000   // wait up to 2.5 minutes for the AI agent
+};
+
+const $ = (id) => document.getElementById(id);
+const views = ["form", "loading", "result", "emailed", "error"];
+function show(name){
+  views.forEach(v => $("view-" + v).classList.toggle("hidden", v !== name));
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* ---------- validation ---------- */
+function setInvalid(id, bad, msg){
+  const f = $("f-" + id);
+  f.classList.toggle("invalid", bad);
+  if (bad && msg) f.querySelector(".err").textContent = msg;
+}
+function validate(d){
+  let ok = true;
+  const check = (id, bad, msg) => { setInvalid(id, bad, msg); if (bad) ok = false; };
+
+  check("fullName", d.fullName.trim().length < 2);
+  check("email", !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim()));
+  check("goal", !d.goal);
+
+  const cw = parseFloat(d.currentWeight), tw = parseFloat(d.targetWeight);
+  check("currentWeight", !(cw >= 20 && cw <= 400));
+  let tMsg = "Enter a weight between 20 and 400 kg.";
+  let tBad = !(tw >= 20 && tw <= 400);
+  if (!tBad && cw === tw){ tBad = true; tMsg = "Target weight should be different from your current weight."; }
+  else if (!tBad && d.goal === "weight loss" && tw > cw){ tBad = true; tMsg = "For weight loss, your target should be lower than your current weight."; }
+  else if (!tBad && d.goal === "muscle building" && tw < cw){ tBad = true; tMsg = "For muscle building, your target should be higher than your current weight."; }
+  check("targetWeight", tBad, tMsg);
+
+  check("timeline", !d.timeline);
+  check("dietPreferences", !d.dietPreferences);
+  return ok;
+}
+
+/* ---------- reading the webhook response ---------- */
+function extractHtml(text, contentType){
+  let html = "";
+  if ((contentType || "").includes("application/json")){
+    try{
+      let j = JSON.parse(text);
+      if (Array.isArray(j)) j = j[0];
+      if (typeof j === "string") html = j;
+      else if (j && typeof j === "object") html = j.html || j.output || j.message_html || "";
+    }catch(e){ html = ""; }
+  } else {
+    html = text;
+  }
+  // some models wrap HTML in ```html fences – strip them
+  html = (html || "").replace(/^\s*```(?:html)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+  return html;
+}
+
+function renderPlan(html){
+  const frame = $("plan");
+  // Inline dark theme + a strict CSP: no scripts, no network, only inline styles & images.
+  const doc = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data: https:">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body{margin:0;padding:24px;background:#0d0d0f;color:#e8e8ea;
+       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       font-size:15.5px;line-height:1.65}
+  h1,h2,h3{color:#fff;line-height:1.25}
+  h2{font-size:21px;margin:28px 0 10px;padding-top:6px;border-top:1px solid #26262b}
+  h2:first-child{border-top:0;margin-top:0}
+  h3{font-size:17px;margin:20px 0 6px;color:#c6f432}
+  ul{padding-left:22px;margin:6px 0 12px} li{margin:4px 0}
+  b,strong{color:#fff} i,em{color:#b9b9c0}
+  table{border-collapse:collapse;width:100%} td,th{border:1px solid #26262b;padding:8px;text-align:left}
+  a{color:#c6f432}
+</style></head><body>${html}</body></html>`;
+  frame.onload = () => {
+    try{
+      const d = frame.contentDocument;
+      frame.style.height = (d.documentElement.scrollHeight + 4) + "px";
+    }catch(e){ frame.style.height = "900px"; }
+  };
+  frame.srcdoc = doc;
+}
+
+/* ---------- submit ---------- */
+$("plan-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const data = {
+    fullName: form.fullName.value,
+    email: form.email.value,
+    goal: form.goal.value,
+    currentWeight: form.currentWeight.value,
+    targetWeight: form.targetWeight.value,
+    timeline: form.timeline.value,
+    dietPreferences: form.dietPreferences.value
+  };
+  if (!validate(data)) {
+    const first = document.querySelector(".field.invalid input, .field.invalid select");
+    if (first) first.focus();
+    return;
+  }
+  const payload = {
+    fullName: data.fullName.trim(),
+    email: data.email.trim(),
+    goal: data.goal,
+    currentWeight: data.currentWeight,
+    targetWeight: data.targetWeight,
+    timeline: data.timeline,
+    dietPreferences: data.dietPreferences
+  };
+
+  show("loading");
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), CONFIG.TIMEOUT_MS);
+
+  try{
+    const res = await fetch(CONFIG.WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error("Server responded with status " + res.status);
+
+    const text = await res.text();
+    const html = extractHtml(text, res.headers.get("content-type"));
+
+    if (html && /<[a-z][\s\S]*>/i.test(html)){
+      renderPlan(html);
+      show("result");
+    } else {
+      $("sent-to").textContent = payload.email;
+      show("emailed");
+    }
+  }catch(err){
+    clearTimeout(timer);
+    console.error(err);
+    $("error-msg").textContent = err.name === "AbortError"
+      ? "The plan is taking longer than expected. It may still arrive in your email, so please check your inbox in a few minutes."
+      : "We couldn't reach the plan generator. Please check your internet connection and try again.";
+    show("error");
+  }
+});
+
+/* clear a field's error as soon as the user edits it */
+document.querySelectorAll("input, select").forEach(el => {
+  const clear = () => { const f = el.closest(".field"); if (f) f.classList.remove("invalid"); };
+  el.addEventListener("input", clear); el.addEventListener("change", clear);
+});
+
+/* navigation buttons */
+const reset = () => { $("plan-form").reset(); $("plan").srcdoc = ""; show("form"); };
+$("again-1").addEventListener("click", reset);
+$("again-2").addEventListener("click", reset);
+$("retry").addEventListener("click", () => show("form"));
+</script>
+</body>
+</html>
